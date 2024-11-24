@@ -5,6 +5,9 @@ all: format test build
 format:
 	clang-format src/* include/* -i
 
+.PHONY: fmt
+fmt: format
+
 .PHONY: build
 build:
 	mkdir -p build
