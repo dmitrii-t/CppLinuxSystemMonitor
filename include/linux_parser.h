@@ -5,6 +5,8 @@
 #include <regex>
 #include <string>
 
+#include "memory_utilization.h"
+
 namespace LinuxParser {
 // Paths
 const std::string kProcDirectory{"/proc/"};
@@ -19,7 +21,7 @@ const std::string kOSPath{"/etc/os-release"};
 const std::string kPasswordPath{"/etc/passwd"};
 
 // System
-float MemoryUtilization();
+MemoryUtilization ParseMemoryUtilization(const std::string& path = "");
 long UpTime();
 std::vector<int> Pids();
 int TotalProcesses();
