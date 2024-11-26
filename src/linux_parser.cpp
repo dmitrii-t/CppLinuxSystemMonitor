@@ -1,11 +1,16 @@
+
 #include "linux_parser.h"
 
 #include <dirent.h>
 #include <unistd.h>
 
+#include <iostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
+using std::cout;
+using std::ifstream;
 using std::stof;
 using std::string;
 using std::to_string;
@@ -16,7 +21,7 @@ string LinuxParser::OperatingSystem() {
   string line;
   string key;
   string value;
-  std::ifstream filestream(kOSPath);
+  ifstream filestream(kOSPath);
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
       std::replace(line.begin(), line.end(), ' ', '_');
@@ -38,7 +43,7 @@ string LinuxParser::OperatingSystem() {
 string LinuxParser::Kernel() {
   string os, version, kernel;
   string line;
-  std::ifstream stream(kProcDirectory + kVersionFilename);
+  ifstream stream(kProcDirectory + kVersionFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
     std::istringstream linestream(line);
@@ -67,11 +72,124 @@ vector<int> LinuxParser::Pids() {
   return pids;
 }
 
+MemoryStats LinuxParser::ReadMemoryStats() {
+  MemoryStats memory;
+  std::unordered_map<std::string, int64_t&> memoryMap = {
+      {"MemTotal", memory.MemTotal},
+      {"MemFree", memory.MemFree},
+      {"MemAvailable", memory.MemAvailable},
+      {"Buffers", memory.Buffers},
+      {"Cached", memory.Cached},
+      {"SReclaimable", memory.SReclaimable},
+      {"Shmem", memory.Shmem},
+      {"SwapFree", memory.SwapFree},
+      {"SwapTotal", memory.SwapTotal},
+  };
+
+  string line;
+  string key;
+  int value;
+  ifstream filestream(kProcDirectory + kMeminfoFilename);
+
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::replace(line.begin(), line.end(), ':', ' ');
+      std::istringstream linestream(line);
+      while (linestream >> key >> value) {
+        // cout << key << "=" << value << '\n';
+        auto it = memoryMap.find(key);
+        if (it != memoryMap.end()) {
+          it->second = value;
+        }
+      }
+    }
+  }
+  return memory;
+}
+
 // TODO: Read and return the system memory utilization
 float LinuxParser::MemoryUtilization() { return 0.0; }
 
-// TODO: Read and return the system uptime
-long LinuxParser::UpTime() { return 0; }
+// DONE: Read and return the system uptime
+long LinuxParser::UpTime() {
+  double uptime, idle;
+  string line;
+  ifstream filestream(kProcDirectory + kUptimeFilename);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::istringstream linestream(line);
+      linestream >> uptime >> idle;
+    }
+  }
+  return uptime * 1000;  // millis
+}
+
+SystemStats LinuxParser::ReadSystemStats() {
+  SystemStats system;
+  string name;
+  string line;
+  ifstream filestream(kProcDirectory + kStatFilename);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::istringstream linestream(line);
+      if (linestream >> name) {
+        // read CPUs
+        if (name.length() >= 3 && name.substr(0, 3) == "cpu") {
+          
+          // sets just the first menber of the strust which is name
+          Cpu cpu{name};
+
+          // continue reading the stream to the proc structure
+          if (linestream >> cpu.user >> cpu.nice >> cpu.system >> cpu.idle >>
+              cpu.iowait >> cpu.irq >> cpu.softirq >> cpu.steal >> cpu.guest >>
+              cpu.guest_nice) {
+            // append when all the reads has happened
+            system.cpus.push_back(cpu);
+              }
+        }
+
+        // read processes total
+        if (name.length() >= 9 && name.substr(0, 9) == "processes") {
+          linestream >> system.procs_total;
+        }
+
+        // read processes running
+        if (name.length() >= 13 && name.substr(0, 13) == "procs_running") {
+          linestream >> system.procs_running;
+        }
+
+        // read processes blocked
+        if (name.length() >= 13 && name.substr(0, 13) == "procs_blocked") {
+          linestream >> system.procs_blocked;
+        }
+      }
+    }
+  }
+  return system;
+}
+
+ProcessStats LinuxParser::ReadProcessStats(int pid) {
+  ProcessStats stats;
+  string line, key;
+  ifstream filestream(kProcDirectory + to_string(pid) + kStatusFilename);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::istringstream linestream(line);
+      if (linestream >> key) {
+        // read RAM
+        if (key == "VmSize:") {
+          linestream >> stats.ram;
+        }
+
+        // read UID
+        if (key == "Uid:") {
+          linestream >> stats.uid;
+        }
+      }
+    }
+  }
+  return stats;
+}
 
 // TODO: Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() { return 0; }

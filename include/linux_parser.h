@@ -1,57 +1,122 @@
 #ifndef SYSTEM_PARSER_H
 #define SYSTEM_PARSER_H
 
+#include <cmath>
 #include <fstream>
 #include <regex>
 #include <string>
+#include <vector>
 
-namespace LinuxParser {
-// Paths
-const std::string kProcDirectory{"/proc/"};
-const std::string kCmdlineFilename{"/cmdline"};
-const std::string kCpuinfoFilename{"/cpuinfo"};
-const std::string kStatusFilename{"/status"};
-const std::string kStatFilename{"/stat"};
-const std::string kUptimeFilename{"/uptime"};
-const std::string kMeminfoFilename{"/meminfo"};
-const std::string kVersionFilename{"/version"};
-const std::string kOSPath{"/etc/os-release"};
-const std::string kPasswordPath{"/etc/passwd"};
+#include "processor.h"
 
-// System
-float MemoryUtilization();
-long UpTime();
-std::vector<int> Pids();
-int TotalProcesses();
-int RunningProcesses();
-std::string OperatingSystem();
-std::string Kernel();
+using std::string;
+using std::vector;
 
-// CPU
-enum CPUStates {
-  kUser_ = 0,
-  kNice_,
-  kSystem_,
-  kIdle_,
-  kIOwait_,
-  kIRQ_,
-  kSoftIRQ_,
-  kSteal_,
-  kGuest_,
-  kGuestNice_
+struct Cpu {
+  float Utilization() {
+    return round((ActiveTime() * 1.0 / TotalTime() * 1.0) * 1000) / 1000;
+  }
+  int ActiveTime() {
+    return user + nice + system + irq + softirq + steal + guest + guest_nice;
+  }
+  int TotalTime() {
+    return user + nice + system + idle + iowait + irq + softirq + steal +
+           guest + guest_nice;
+  }
+
+  string name;
+  int user;
+  int nice;
+  int system;
+  int idle;
+  int iowait;
+  int irq;
+  int softirq;
+  int steal;
+  int guest;
+  int guest_nice;
 };
-std::vector<std::string> CpuUtilization();
-long Jiffies();
-long ActiveJiffies();
-long ActiveJiffies(int pid);
-long IdleJiffies();
 
-// Processes
-std::string Command(int pid);
-std::string Ram(int pid);
-std::string Uid(int pid);
-std::string User(int pid);
-long int UpTime(int pid);
-};  // namespace LinuxParser
+struct SystemStats {
+  vector<Cpu> cpus;
+  int procs_total;
+  int procs_running;
+  int procs_blocked;
+};
 
+struct ProcessStats {
+  int ram;
+  int uid;
+};
+
+struct MemoryStats {
+  int64_t TotalUsedMemory() { return MemTotal - MemFree; }
+  int64_t NonCacheMemory() { return TotalUsedMemory() - Buffers - Cached; }
+  int64_t CachedMemory() { return Cached + SReclaimable - Shmem; }
+  int64_t Swap() { return SwapTotal - SwapFree; }
+  int64_t MemTotal;
+  int64_t MemFree;
+  int64_t MemAvailable;
+  int64_t Buffers;
+  int64_t Cached;
+  int64_t SReclaimable;
+  int64_t Shmem;
+  int64_t SwapFree;
+  int64_t SwapTotal;
+};
+
+class LinuxParser {
+ public:
+  // Paths
+  string kProcDirectory{"/proc/"};
+  string kCmdlineFilename{"/cmdline"};
+  string kCpuinfoFilename{"/cpuinfo"};
+  string kStatusFilename{"/status"};
+  string kStatFilename{"/stat"};
+  string kUptimeFilename{"/uptime"};
+  string kMeminfoFilename{"/meminfo"};
+  string kVersionFilename{"/version"};
+  string kOSPath{"/etc/os-release"};
+  string kPasswordPath{"/etc/passwd"};
+
+  // System
+  MemoryStats ReadMemoryStats();
+  SystemStats ReadSystemStats();
+  ProcessStats ReadProcessStats(int pid);
+
+  float MemoryUtilization();
+  long UpTime();
+  std::vector<int> Pids();
+  int TotalProcesses();
+  int RunningProcesses();
+  string OperatingSystem();
+  string Kernel();
+
+  // CPU
+  enum CPUStates {
+    kUser_ = 0,
+    kNice_,
+    kSystem_,
+    kIdle_,
+    kIOwait_,
+    kIRQ_,
+    kSoftIRQ_,
+    kSteal_,
+    kGuest_,
+    kGuestNice_
+  };
+  std::vector<string> CpuUtilization();
+  long Jiffies();
+  long ActiveJiffies();
+  long ActiveJiffies(int pid);
+  long IdleJiffies();
+
+  // Processes
+  string Command(int pid);
+  string Ram(int pid);
+  string Uid(int pid);
+  string User(int pid);
+  long int UpTime(int pid);
+
+};  // class LinuxParser
 #endif
