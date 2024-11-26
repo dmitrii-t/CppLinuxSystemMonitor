@@ -5,53 +5,58 @@
 #include <regex>
 #include <string>
 
-namespace LinuxParser {
-// Paths
-const std::string kProcDirectory{"/proc/"};
-const std::string kCmdlineFilename{"/cmdline"};
-const std::string kCpuinfoFilename{"/cpuinfo"};
-const std::string kStatusFilename{"/status"};
-const std::string kStatFilename{"/stat"};
-const std::string kUptimeFilename{"/uptime"};
-const std::string kMeminfoFilename{"/meminfo"};
-const std::string kVersionFilename{"/version"};
-const std::string kOSPath{"/etc/os-release"};
-const std::string kPasswordPath{"/etc/passwd"};
+#include "memory_stats.h"
 
-// System
-float MemoryUtilization();
-long UpTime();
-std::vector<int> Pids();
-int TotalProcesses();
-int RunningProcesses();
-std::string OperatingSystem();
-std::string Kernel();
+using std::string;
 
-// CPU
-enum CPUStates {
-  kUser_ = 0,
-  kNice_,
-  kSystem_,
-  kIdle_,
-  kIOwait_,
-  kIRQ_,
-  kSoftIRQ_,
-  kSteal_,
-  kGuest_,
-  kGuestNice_
-};
-std::vector<std::string> CpuUtilization();
-long Jiffies();
-long ActiveJiffies();
-long ActiveJiffies(int pid);
-long IdleJiffies();
+class LinuxParser {
+ public:
+  // System
+  MemoryStats ReadMemoryStats();
+  long UpTime();
+  std::vector<int> Pids();
+  int TotalProcesses();
+  int RunningProcesses();
+  string OperatingSystem();
+  string Kernel();
 
-// Processes
-std::string Command(int pid);
-std::string Ram(int pid);
-std::string Uid(int pid);
-std::string User(int pid);
-long int UpTime(int pid);
-};  // namespace LinuxParser
+  // CPU
+  enum CPUStates {
+    kUser_ = 0,
+    kNice_,
+    kSystem_,
+    kIdle_,
+    kIOwait_,
+    kIRQ_,
+    kSoftIRQ_,
+    kSteal_,
+    kGuest_,
+    kGuestNice_
+  };
+  std::vector<string> CpuUtilization();
+  long Jiffies();
+  long ActiveJiffies();
+  long ActiveJiffies(int pid);
+  long IdleJiffies();
+
+  // Processes
+  string Command(int pid);
+  string Ram(int pid);
+  string Uid(int pid);
+  string User(int pid);
+  long int UpTime(int pid);
+
+  // Paths
+  string kProcDirectory{"/proc/"};
+  string kCmdlineFilename{"/cmdline"};
+  string kCpuinfoFilename{"/cpuinfo"};
+  string kStatusFilename{"/status"};
+  string kStatFilename{"/stat"};
+  string kUptimeFilename{"/uptime"};
+  string kMeminfoFilename{"/meminfo"};
+  string kVersionFilename{"/version"};
+  string kOSPath{"/etc/os-release"};
+  string kPasswordPath{"/etc/passwd"};
+};  // class LinuxParser
 
 #endif

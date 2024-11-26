@@ -3,9 +3,12 @@
 #include <dirent.h>
 #include <unistd.h>
 
+#include <iostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
+using std::cout;
 using std::stof;
 using std::string;
 using std::to_string;
@@ -67,8 +70,41 @@ vector<int> LinuxParser::Pids() {
   return pids;
 }
 
-// TODO: Read and return the system memory utilization
-float LinuxParser::MemoryUtilization() { return 0.0; }
+// DONE: Read and return the system memory stats
+MemoryStats LinuxParser::ReadMemoryStats() {
+  MemoryStats memory;
+  std::unordered_map<std::string, int64_t&> memoryMap = {
+      {"MemTotal", memory.MemTotal},
+      {"MemFree", memory.MemFree},
+      {"MemAvailable", memory.MemAvailable},
+      {"Buffers", memory.Buffers},
+      {"Cached", memory.Cached},
+      {"SReclaimable", memory.SReclaimable},
+      {"Shmem", memory.Shmem},
+      {"SwapFree", memory.SwapFree},
+      {"SwapTotal", memory.SwapTotal},
+  };
+
+  string line;
+  string key;
+  int value;
+  std::ifstream filestream(kProcDirectory + kMeminfoFilename);
+
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::replace(line.begin(), line.end(), ':', ' ');
+      std::istringstream linestream(line);
+      while (linestream >> key >> value) {
+        // cout << key << "=" << value << '\n';
+        auto it = memoryMap.find(key);
+        if (it != memoryMap.end()) {
+          it->second = value;
+        }
+      }
+    }
+  }
+  return memory;
+}
 
 // TODO: Read and return the system uptime
 long LinuxParser::UpTime() { return 0; }
