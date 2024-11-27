@@ -1,4 +1,5 @@
 #include "linux_parser.h"
+#include "memory_utilization.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -6,10 +7,14 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+#include <unordered_map>
+
 using std::stof;
 using std::string;
 using std::to_string;
 using std::vector;
+using std::cout;
 
 // DONE: An example of how to read data from the filesystem
 string LinuxParser::OperatingSystem() {
@@ -67,8 +72,42 @@ vector<int> LinuxParser::Pids() {
   return pids;
 }
 
-// TODO: Read and return the system memory utilization
-float LinuxParser::MemoryUtilization() { return 0.0; }
+// DONE: Read and return the system memory utilization
+MemoryUtilization LinuxParser::ParseMemoryUtilization(const std::string& path) {
+  MemoryUtilization memory;
+  std::unordered_map<std::string, int64_t&> memoryMap = {
+    {"MemTotal", memory.MemTotal},
+    {"MemFree", memory.MemFree},
+    {"MemAvailable", memory.MemAvailable},
+    {"Buffers", memory.Buffers},
+    {"Cached", memory.Cached},
+    {"SReclaimable", memory.SReclaimable},
+    {"Shmem", memory.Shmem},
+    {"SwapFree", memory.SwapFree},
+    {"SwapTotal", memory.SwapTotal},
+  };
+
+  string line;
+  string key;
+  int value;
+  std::string filePath = path.empty() ? kProcDirectory + kMeminfoFilename : path;
+  std::ifstream filestream(filePath);
+
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::replace(line.begin(), line.end(), ':', ' ');
+      std::istringstream linestream(line);
+      while (linestream >> key >> value) {
+        // cout << key << "=" << value << '\n';
+        auto it = memoryMap.find(key);
+        if (it != memoryMap.end()) {
+          it->second = value;
+        }
+      }
+    }
+  }
+  return memory; 
+}
 
 // TODO: Read and return the system uptime
 long LinuxParser::UpTime() { return 0; }
