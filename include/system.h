@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "memory_stats.h"
 #include "process.h"
 #include "processor.h"
 
@@ -21,6 +22,7 @@ class System {
   // TODO: Define any necessary private members
  private:
   Processor cpu_ = {};
+  MemoryStats memory_ = {};
   std::vector<Process> processes_ = {};
 };
 
