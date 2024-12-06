@@ -45,6 +45,14 @@ struct SystemStats {
 };
 
 struct ProcessStats {
+  int user;
+  int system;
+  int child_user;
+  int child_system;
+  int start_time;
+};
+
+struct ProcessStatus {
   int ram;
   int uid;
 };
@@ -79,11 +87,13 @@ class LinuxParser {
   string kOSPath{"/etc/os-release"};
   string kPasswordPath{"/etc/passwd"};
 
-  // System
+  // Custom
   MemoryStats ReadMemoryStats();
   SystemStats ReadSystemStats();
-  ProcessStats ReadProcessStats(int pid);
+  ProcessStats ReadProcessStats(int);
+  ProcessStatus ReadProcessStatus(int);
 
+  // System
   float MemoryUtilization();
   long UpTime();
   std::vector<int> Pids();
