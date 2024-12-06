@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -135,7 +136,6 @@ SystemStats LinuxParser::ReadSystemStats() {
       if (linestream >> name) {
         // read CPUs
         if (name.length() >= 3 && name.substr(0, 3) == "cpu") {
-          
           // sets just the first menber of the strust which is name
           Cpu cpu{name};
 
@@ -145,7 +145,7 @@ SystemStats LinuxParser::ReadSystemStats() {
               cpu.guest_nice) {
             // append when all the reads has happened
             system.cpus.push_back(cpu);
-              }
+          }
         }
 
         // read processes total
@@ -168,8 +168,8 @@ SystemStats LinuxParser::ReadSystemStats() {
   return system;
 }
 
-ProcessStats LinuxParser::ReadProcessStats(int pid) {
-  ProcessStats stats;
+ProcessStatus LinuxParser::ReadProcessStatus(int pid) {
+  ProcessStatus status;
   string line, key;
   ifstream filestream(kProcDirectory + to_string(pid) + kStatusFilename);
   if (filestream.is_open()) {
@@ -178,14 +178,44 @@ ProcessStats LinuxParser::ReadProcessStats(int pid) {
       if (linestream >> key) {
         // read RAM
         if (key == "VmSize:") {
-          linestream >> stats.ram;
+          linestream >> status.ram;
         }
 
         // read UID
         if (key == "Uid:") {
-          linestream >> stats.uid;
+          linestream >> status.uid;
         }
       }
+    }
+  }
+  return status;
+}
+
+ProcessStats LinuxParser::ReadProcessStats(int pid) {
+  ProcessStats stats;
+  string line, _;
+  ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::istringstream linestream(line);
+      // skip the first 13 numbers
+      for (int i = 0; i < 13; i++) {
+        linestream >> _;
+      }
+
+      // read the jiffies
+      linestream >> stats.user;          // utime (14)
+      linestream >> stats.system;        // stime (15)
+      linestream >> stats.child_user;    // cutime (16)
+      linestream >> stats.child_system;  // cstime (17)
+
+      // skip the next numbers till 22
+      for (int i = 16; i < 20; i++) {
+        linestream >> _;
+      }
+
+      // read the start time
+      linestream >> stats.start_time;
     }
   }
   return stats;
@@ -215,7 +245,17 @@ int LinuxParser::RunningProcesses() { return 0; }
 
 // TODO: Read and return the command associated with a process
 // REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Command(int pid [[maybe_unused]]) { return string(); }
+string LinuxParser::Command(int pid) {
+  string cmd, line;
+  ifstream filestream(kProcDirectory + to_string(pid) + kCmdlineFilename);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::replace(line.begin(), line.end(), '\0', ' ');
+      cmd = line;
+    }
+  }
+  return cmd;
+}
 
 // TODO: Read and return the memory used by a process
 // REMOVE: [[maybe_unused]] once you define the function

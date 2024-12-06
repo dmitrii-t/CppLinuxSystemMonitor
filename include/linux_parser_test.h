@@ -47,7 +47,7 @@ void TestReadSystemStats() {
   LinuxParser parser;
   parser.kProcDirectory = "./test/";  // local project directory
 
-  SystemStats system = parser.ReadSystemStats();
+  SystemStats system{parser.ReadSystemStats()};
   assert(system.cpus[0].name == expected.name);
   assert(system.cpus[0].user == expected.user);
   assert(system.cpus[0].nice == expected.nice);
@@ -66,12 +66,11 @@ void TestReadSystemStats() {
   assert(system.procs_blocked == 0);
 }
 
-void TestReadProcessStats() 
-{
+void TestReadProcessStatus() {
   LinuxParser parser;
   parser.kProcDirectory = "./test/";  // local project directory
 
-  ProcessStats stats = parser.ReadProcessStats(1);
+  ProcessStatus stats{parser.ReadProcessStatus(1)};
   assert(stats.ram == 23312);
   assert(stats.uid == 0);
 }
@@ -84,11 +83,32 @@ void TestPids() {
   assert(pids == expected);
 }
 
+void TestCommand() {
+  string expected{"/sbin/init splash "};
+  LinuxParser parser;
+  parser.kProcDirectory = "./test/";
+  auto cmd = parser.Command(1);
+  assert(cmd == expected);
+}
+
+void TestReadProcessStats() {
+  LinuxParser parser;
+  parser.kProcDirectory = "./test/";
+  auto stats = parser.ReadProcessStats(1);
+  assert(stats.user == 58);
+  assert(stats.system == 220);
+  assert(stats.child_user == 401);
+  assert(stats.child_system == 680);
+  assert(stats.start_time == 121);
+}
+
 void TestLinuxParser() {
   TestReadMemoryStats();
   TestKernel();
   TestUpTime();
   TestReadSystemStats();
   TestReadProcessStats();
+  TestReadProcessStatus();
+  TestCommand();
   cout << "LinuxParser: All tests passed!" << endl;
 }
