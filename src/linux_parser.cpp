@@ -1,4 +1,3 @@
-
 #include "linux_parser.h"
 
 #include <dirent.h>
@@ -15,6 +14,7 @@ using std::ifstream;
 using std::stof;
 using std::string;
 using std::to_string;
+using std::unordered_map;
 using std::vector;
 
 // DONE: An example of how to read data from the filesystem
@@ -73,9 +73,79 @@ vector<int> LinuxParser::Pids() {
   return pids;
 }
 
+// TODO: Read and return the system memory utilization
+// float LinuxParser::MemoryUtilization() { return 0.0; }
+
+// DONE: Read and return the system uptime
+long LinuxParser::UpTime() {
+  double uptime, idle;
+  string line;
+  ifstream filestream(kProcDirectory + kUptimeFilename);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::istringstream linestream(line);
+      linestream >> uptime >> idle;
+    }
+  }
+  return uptime;  // seconds
+}
+
+// TODO: Read and return the number of jiffies for the system
+// long LinuxParser::Jiffies() { return 0; }
+
+// TODO: Read and return the number of active jiffies for a PID
+// REMOVE: [[maybe_unused]] once you define the function
+// long LinuxParser::ActiveJiffies(int pid [[maybe_unused]]) { return 0; }
+
+// TODO: Read and return the number of active jiffies for the system
+// long LinuxParser::ActiveJiffies() { return 0; }
+
+// TODO: Read and return the number of idle jiffies for the system
+// long LinuxParser::IdleJiffies() { return 0; }
+
+// TODO: Read and return CPU utilization
+// vector<string> LinuxParser::CpuUtilization() { return {}; }
+
+// TODO: Read and return the total number of processes
+// int LinuxParser::TotalProcesses() { return 0; }
+
+// TODO: Read and return the number of running processes
+// int LinuxParser::RunningProcesses() { return 0; }
+
+// DONE: Read and return the command associated with a process
+string LinuxParser::Command(int pid) {
+  string cmd, line;
+  ifstream filestream(kProcDirectory + to_string(pid) + kCmdlineFilename);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      cmd = line;
+      std::replace(cmd.begin(), cmd.end(), '\0', ' ');
+    }
+  }
+  return cmd;
+}
+
+// TODO: Read and return the memory used by a process
+// REMOVE: [[maybe_unused]] once you define the function
+// string LinuxParser::Ram(int pid [[maybe_unused]]) { return string(); }
+
+// TODO: Read and return the user ID associated with a process
+// REMOVE: [[maybe_unused]] once you define the function
+// string LinuxParser::Uid(int pid [[maybe_unused]]) { return string(); }
+
+// TODO: Read and return the user associated with a process
+// REMOVE: [[maybe_unused]] once you define the function
+// string LinuxParser::User(int pid [[maybe_unused]]) { return string(); }
+
+// TODO: Read and return the uptime of a process
+// REMOVE: [[maybe_unused]] once you define the function
+// long LinuxParser::UpTime(int pid [[maybe_unused]]) { return 0; }
+
+// Read functions below
 MemoryStats LinuxParser::ReadMemoryStats() {
+  // The map below maps the keys to an instance fields
   MemoryStats memory;
-  std::unordered_map<std::string, int64_t&> memoryMap = {
+  static unordered_map<string, int&> memoryMap = {
       {"MemTotal", memory.MemTotal},
       {"MemFree", memory.MemFree},
       {"MemAvailable", memory.MemAvailable},
@@ -97,7 +167,6 @@ MemoryStats LinuxParser::ReadMemoryStats() {
       std::replace(line.begin(), line.end(), ':', ' ');
       std::istringstream linestream(line);
       while (linestream >> key >> value) {
-        // cout << key << "=" << value << '\n';
         auto it = memoryMap.find(key);
         if (it != memoryMap.end()) {
           it->second = value;
@@ -106,23 +175,6 @@ MemoryStats LinuxParser::ReadMemoryStats() {
     }
   }
   return memory;
-}
-
-// TODO: Read and return the system memory utilization
-float LinuxParser::MemoryUtilization() { return 0.0; }
-
-// DONE: Read and return the system uptime
-long LinuxParser::UpTime() {
-  double uptime, idle;
-  string line;
-  ifstream filestream(kProcDirectory + kUptimeFilename);
-  if (filestream.is_open()) {
-    while (std::getline(filestream, line)) {
-      std::istringstream linestream(line);
-      linestream >> uptime >> idle;
-    }
-  }
-  return uptime * 1000;  // millis
 }
 
 SystemStats LinuxParser::ReadSystemStats() {
@@ -171,14 +223,17 @@ SystemStats LinuxParser::ReadSystemStats() {
 ProcessStatus LinuxParser::ReadProcessStatus(int pid) {
   ProcessStatus status;
   string line, key;
-  ifstream filestream(kProcDirectory + to_string(pid) + kStatusFilename);
+  string path{kProcDirectory + to_string(pid) + kStatusFilename};
+  ifstream filestream(path);
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
       std::istringstream linestream(line);
       if (linestream >> key) {
         // read RAM
         if (key == "VmSize:") {
-          linestream >> status.ram;
+          string ram, units;
+          linestream >> ram >> units;
+          status.ram = ram + units;
         }
 
         // read UID
@@ -204,10 +259,10 @@ ProcessStats LinuxParser::ReadProcessStats(int pid) {
       }
 
       // read the jiffies
-      linestream >> stats.user;          // utime (14)
-      linestream >> stats.system;        // stime (15)
-      linestream >> stats.child_user;    // cutime (16)
-      linestream >> stats.child_system;  // cstime (17)
+      linestream >> stats.user_time;          // utime (14)
+      linestream >> stats.system_time;        // stime (15)
+      linestream >> stats.child_user_time;    // cutime (16)
+      linestream >> stats.child_system_time;  // cstime (17)
 
       // skip the next numbers till 22
       for (int i = 16; i < 20; i++) {
@@ -221,54 +276,19 @@ ProcessStats LinuxParser::ReadProcessStats(int pid) {
   return stats;
 }
 
-// TODO: Read and return the number of jiffies for the system
-long LinuxParser::Jiffies() { return 0; }
+unordered_map<int, string> LinuxParser::ReadUserMap() {
+  unordered_map<int, string> result;
+  string line, username, uid, _;
 
-// TODO: Read and return the number of active jiffies for a PID
-// REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::ActiveJiffies(int pid [[maybe_unused]]) { return 0; }
-
-// TODO: Read and return the number of active jiffies for the system
-long LinuxParser::ActiveJiffies() { return 0; }
-
-// TODO: Read and return the number of idle jiffies for the system
-long LinuxParser::IdleJiffies() { return 0; }
-
-// TODO: Read and return CPU utilization
-vector<string> LinuxParser::CpuUtilization() { return {}; }
-
-// TODO: Read and return the total number of processes
-int LinuxParser::TotalProcesses() { return 0; }
-
-// TODO: Read and return the number of running processes
-int LinuxParser::RunningProcesses() { return 0; }
-
-// TODO: Read and return the command associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Command(int pid) {
-  string cmd, line;
-  ifstream filestream(kProcDirectory + to_string(pid) + kCmdlineFilename);
+  ifstream filestream(kPasswordPath);
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
-      std::replace(line.begin(), line.end(), '\0', ' ');
-      cmd = line;
+      std::istringstream iss(line);
+      if (std::getline(iss, username, ':') && std::getline(iss, _, ':') &&
+          std::getline(iss, uid, ':')) {
+        result[std::stoi(uid)] = username;
+      }
     }
   }
-  return cmd;
+  return result;
 }
-
-// TODO: Read and return the memory used by a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Ram(int pid [[maybe_unused]]) { return string(); }
-
-// TODO: Read and return the user ID associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Uid(int pid [[maybe_unused]]) { return string(); }
-
-// TODO: Read and return the user associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::User(int pid [[maybe_unused]]) { return string(); }
-
-// TODO: Read and return the uptime of a process
-// REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::UpTime(int pid [[maybe_unused]]) { return 0; }

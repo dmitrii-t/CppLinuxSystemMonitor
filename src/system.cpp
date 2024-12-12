@@ -1,12 +1,11 @@
 #include "system.h"
 
-#include <unistd.h>
-
 #include <cstddef>
 #include <set>
 #include <string>
 #include <vector>
 
+#include "linux_parser.h"
 #include "process.h"
 #include "processor.h"
 
@@ -14,6 +13,41 @@ using std::set;
 using std::size_t;
 using std::string;
 using std::vector;
+
+void System::Read() {
+  // Read system uptime
+  system_uptime_ = parser_.UpTime();
+  auto user_map = parser_.ReadUserMap();
+
+  // Create processes
+  auto pids = parser_.Pids();
+  processes_.clear();
+  processes_.reserve(pids.size());
+
+  for (auto pid : pids) {
+    // Read process data
+    auto stats = parser_.ReadProcessStats(pid);
+    auto status = parser_.ReadProcessStatus(pid);
+    int uptime = system_uptime_ - stats.start_time;
+    string cmd = parser_.Command(pid);
+    string username = user_map[status.uid];
+
+    // Create process model
+    Process process{pid,
+                    cmd,
+                    status.uid,
+                    username,
+                    status.ram,
+                    stats.user_time,
+                    stats.system_time,
+                    stats.child_user_time,
+                    stats.child_system_time,
+                    stats.start_time,
+                    uptime};
+
+    processes_.push_back(process);
+  }
+}
 
 // TODO: Return the system's CPU
 Processor& System::Cpu() { return cpu_; }
@@ -37,4 +71,4 @@ int System::RunningProcesses() { return 0; }
 int System::TotalProcesses() { return 0; }
 
 // TODO: Return the number of seconds since the system started running
-long int System::UpTime() { return 0; }
+long int System::UpTime() { return system_uptime_; }

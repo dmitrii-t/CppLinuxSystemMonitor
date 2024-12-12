@@ -38,8 +38,8 @@ void TestOperatingSystem() {
 
 void TestUpTime() {
   LinuxParser parser;
-  parser.kProcDirectory = "./test/";   // local project directory
-  assert(parser.UpTime() == 9833790);  // up time in millis
+  parser.kProcDirectory = "./test/";  // local project directory
+  assert(parser.UpTime() == 9833);    // up time in millis
 }
 
 void TestReadSystemStats() {
@@ -71,7 +71,7 @@ void TestReadProcessStatus() {
   parser.kProcDirectory = "./test/";  // local project directory
 
   ProcessStatus stats{parser.ReadProcessStatus(1)};
-  assert(stats.ram == 23312);
+  assert(stats.ram == "23328kB");
   assert(stats.uid == 0);
 }
 
@@ -95,11 +95,17 @@ void TestReadProcessStats() {
   LinuxParser parser;
   parser.kProcDirectory = "./test/";
   auto stats = parser.ReadProcessStats(1);
-  assert(stats.user == 58);
-  assert(stats.system == 220);
-  assert(stats.child_user == 401);
-  assert(stats.child_system == 680);
-  assert(stats.start_time == 121);
+  assert(stats.user_time == 40);
+  assert(stats.system_time == 240);
+  assert(stats.child_user_time == 2114);
+  assert(stats.child_system_time == 4725);
+  assert(stats.start_time == 122);
+}
+
+void TestReadUsers() {
+  LinuxParser parser;
+  auto users = parser.ReadUserMap();
+  assert(users[0] == "root");
 }
 
 void TestLinuxParser() {
@@ -110,5 +116,4 @@ void TestLinuxParser() {
   TestReadProcessStats();
   TestReadProcessStatus();
   TestCommand();
-  cout << "LinuxParser: All tests passed!" << endl;
 }
