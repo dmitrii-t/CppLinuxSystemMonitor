@@ -32,7 +32,7 @@ string Process::Command() { return cmd_; }
 // DONE: Return this process's memory utilization
 string Process::Ram() {
   // Formasts in MB
-  return to_string((ram_ / 1024) / 1024);
+  return (ram_ < 0) ? "n/a" :  to_string((ram_ / 1024) / 1024);
 }
 
 // TODO: Return the user (name) that generated this process
@@ -46,5 +46,5 @@ long int Process::UpTime() const {
 
 // TODO: Overload the "less than" comparison operator for Process objects
 bool Process::operator<(Process const& a) const {
-  return CpuUtilization() > a.CpuUtilization();
+  return ram_ > a.ram_;
 }

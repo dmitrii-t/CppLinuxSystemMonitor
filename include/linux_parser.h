@@ -43,8 +43,8 @@ struct ProcessStats {
 };
 
 struct ProcessStatus {
-  long int ram;
-  int uid;
+  long int ram{-1};
+  int uid{-1};
 };
 
 struct MemoryStats {
