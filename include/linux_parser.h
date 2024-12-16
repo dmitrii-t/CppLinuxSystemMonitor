@@ -1,57 +1,98 @@
 #ifndef SYSTEM_PARSER_H
 #define SYSTEM_PARSER_H
 
+#include <cmath>
 #include <fstream>
 #include <regex>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
-namespace LinuxParser {
-// Paths
-const std::string kProcDirectory{"/proc/"};
-const std::string kCmdlineFilename{"/cmdline"};
-const std::string kCpuinfoFilename{"/cpuinfo"};
-const std::string kStatusFilename{"/status"};
-const std::string kStatFilename{"/stat"};
-const std::string kUptimeFilename{"/uptime"};
-const std::string kMeminfoFilename{"/meminfo"};
-const std::string kVersionFilename{"/version"};
-const std::string kOSPath{"/etc/os-release"};
-const std::string kPasswordPath{"/etc/passwd"};
+using std::string;
+using std::unordered_map;
+using std::vector;
 
-// System
-float MemoryUtilization();
-long UpTime();
-std::vector<int> Pids();
-int TotalProcesses();
-int RunningProcesses();
-std::string OperatingSystem();
-std::string Kernel();
-
-// CPU
-enum CPUStates {
-  kUser_ = 0,
-  kNice_,
-  kSystem_,
-  kIdle_,
-  kIOwait_,
-  kIRQ_,
-  kSoftIRQ_,
-  kSteal_,
-  kGuest_,
-  kGuestNice_
+// Structs to read /proc/stat
+struct Cpu;
+struct SystemStats {
+  vector<Cpu> cpus;
+  int procs_total;
+  int procs_running;
+  long int btime;
 };
-std::vector<std::string> CpuUtilization();
-long Jiffies();
-long ActiveJiffies();
-long ActiveJiffies(int pid);
-long IdleJiffies();
 
-// Processes
-std::string Command(int pid);
-std::string Ram(int pid);
-std::string Uid(int pid);
-std::string User(int pid);
-long int UpTime(int pid);
-};  // namespace LinuxParser
+//  Struct to read /proc/meminfo
+struct MemoryStats {
+  int mem_total;
+  int mem_free;
+  int mem_available;
+  int buffers;
+  int cached;
+  int sreclaimable;
+  int shmem;
+  int swap_free;
+  int swap_total;
+};
 
+struct Cpu {
+  string name;
+  int user;
+  int nice;
+  int system;
+  int idle;
+  int iowait;
+  int irq;
+  int softirq;
+  int steal;
+  int guest;
+  int guest_nice;
+};
+
+// Struct to read /proc/<pid>/stat
+struct ProcessStats {
+  long int user_time;
+  long int system_time;
+  long int child_user_time;
+  long int child_system_time;
+  long int start_time;
+};
+
+// Struct to read /proc/<pid>/status
+struct ProcessStatus {
+  long int ram{-1};
+  int uid{-1};
+};
+
+// Parser class to read Linux's /proc files; reads files into intermediate
+// structs.
+class LinuxParser {
+ public:
+  // Paths
+  string kProcDirectory{"/proc/"};
+  string kCmdlineFilename{"/cmdline"};
+  string kCpuinfoFilename{"/cpuinfo"};
+  string kStatusFilename{"/status"};
+  string kStatFilename{"/stat"};
+  string kUptimeFilename{"/uptime"};
+  string kMeminfoFilename{"/meminfo"};
+  string kVersionFilename{"/version"};
+  string kOSPath{"/etc/os-release"};
+  string kPasswordPath{"/etc/passwd"};
+
+  // System
+  long UpTime();
+  std::vector<int> Pids();
+  string OperatingSystem();
+  string Kernel();
+
+  MemoryStats ReadMemoryStats();
+  SystemStats ReadSystemStats();
+  unordered_map<int, string> ReadUserMap();
+
+  // Processes
+  string Command(int pid);
+  ProcessStats ReadProcessStats(int);
+  ProcessStatus ReadProcessStatus(int);
+
+};  // class LinuxParser
 #endif
