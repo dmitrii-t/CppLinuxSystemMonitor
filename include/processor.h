@@ -19,11 +19,11 @@ class Processor {
 
   Processor() {}
 
-  float Utilization();  // DONE: See src/processor.cpp
+  float Utilization();  // See src/processor.cpp
   long int ActiveTime();
   long int TotalTime();
 
-  // DONE: Declare any necessary private members
+  // Declare any necessary private members
  private:
   long int user_;
   long int nice_;

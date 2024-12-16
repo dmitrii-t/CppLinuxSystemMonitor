@@ -7,7 +7,7 @@
 
 using std::string;
 
-const int HERTZ = sysconf(_SC_CLK_TCK);
+const int CLK_TICKS = sysconf(_SC_CLK_TCK);
 
 /*
 Basic class for Process representation
@@ -30,16 +30,16 @@ class Process {
         child_system_time_(child_system_time),
         start_time_sec_(start_time_sec) {}
 
-  int Pid();                               // DONE: See src/process.cpp
-  string User();                           // DONE: See src/process.cpp
-  string Command();                        // DONE: See src/process.cpp
-  float CpuUtilization() const;            // DONE: See src/process.cpp
-  string Ram();                            // DONE: See src/process.cpp
-  long int UpTime() const;                 // DONE: See src/process.cpp
-  bool operator<(Process const& a) const;  // DONE: See src/process.cpp
+  int Pid();                               // See src/process.cpp
+  string User();                           // See src/process.cpp
+  string Command();                        // See src/process.cpp
+  float CpuUtilization() const;            // See src/process.cpp
+  string Ram();                            // See src/process.cpp
+  long int UpTime() const;                 // See src/process.cpp
+  bool operator<(Process const& a) const;  // See src/process.cpp
 
  private:
-  // DONE: Declare any necessary private members
+  // Declare any necessary private members
   int pid_;
   string cmd_;
   int uid_;

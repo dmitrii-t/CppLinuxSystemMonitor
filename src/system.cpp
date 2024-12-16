@@ -1,15 +1,14 @@
 #include "system.h"
+#include "format.h"
+#include "linux_parser.h"
+#include "process.h"
+#include "processor.h"
 
 #include <cstddef>
 #include <iostream>
 #include <set>
 #include <string>
 #include <vector>
-
-#include "format.h"
-#include "linux_parser.h"
-#include "process.h"
-#include "processor.h"
 
 using std::cout;
 using std::set;
@@ -56,7 +55,7 @@ void System::Read() {
     auto status = parser_.ReadProcessStatus(pid);
     auto command = parser_.Command(pid);
     auto username = user_map[status.uid];
-    auto proc_start_time = start_time_sec_ + stats.start_time / HERTZ;
+    auto proc_start_time = start_time_sec_ + stats.start_time / CLK_TICKS;
 
     // Create process model
     Process process{pid,

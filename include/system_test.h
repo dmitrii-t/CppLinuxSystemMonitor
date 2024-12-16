@@ -26,7 +26,7 @@ void TestSystemReadProcessesSuccessfully() {
   assert(proc.User() == "root");
   assert(proc.CpuUtilization() == 0);
   assert(proc.Ram() == "22");
-  assert(system.MemoryUtilization() == 0.68f); 
+  assert(system.MemoryUtilization() == 0.68f);
   assert(system.Cpu().Utilization() == 0.05f);
   assert(system.UpTime() == 9833);
   assert(system.TotalProcesses() == 9127);

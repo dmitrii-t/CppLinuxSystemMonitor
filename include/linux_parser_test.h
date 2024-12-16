@@ -63,7 +63,6 @@ void TestReadSystemStats() {
   assert(system.cpus[0].guest_nice == expected.guest_nice);
   assert(system.procs_total == 9127);
   assert(system.procs_running == 3);
-  assert(system.procs_blocked == 0);
 }
 
 void TestReadProcessStatus() {

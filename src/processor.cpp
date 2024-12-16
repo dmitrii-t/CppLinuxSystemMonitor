@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-// DONE: Return the aggregate CPU utilization
+// Return the aggregate CPU utilization
 float Processor::Utilization() {
   float utilization = ActiveTime() / (1.f * TotalTime());
   return round(100.f * utilization) / 100.f;  // percentage

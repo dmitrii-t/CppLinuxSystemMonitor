@@ -12,6 +12,28 @@ using std::string;
 using std::unordered_map;
 using std::vector;
 
+// Structs to read /proc/stat
+struct Cpu;
+struct SystemStats {
+  vector<Cpu> cpus;
+  int procs_total;
+  int procs_running;
+  long int btime;
+};
+
+//  Struct to read /proc/meminfo
+struct MemoryStats {
+  int mem_total;
+  int mem_free;
+  int mem_available;
+  int buffers;
+  int cached;
+  int sreclaimable;
+  int shmem;
+  int swap_free;
+  int swap_total;
+};
+
 struct Cpu {
   string name;
   int user;
@@ -26,14 +48,7 @@ struct Cpu {
   int guest_nice;
 };
 
-struct SystemStats {
-  vector<Cpu> cpus;
-  int procs_total;
-  int procs_running;
-  int procs_blocked;
-  long int btime;
-};
-
+// Struct to read /proc/<pid>/stat
 struct ProcessStats {
   long int user_time;
   long int system_time;
@@ -42,25 +57,14 @@ struct ProcessStats {
   long int start_time;
 };
 
+// Struct to read /proc/<pid>/status
 struct ProcessStatus {
   long int ram{-1};
   int uid{-1};
 };
 
-struct MemoryStats {
-  int mem_total;
-  int mem_free;
-  int mem_available;
-  int buffers;
-  int cached;
-  int sreclaimable;
-  int shmem;
-  int swap_free;
-  int swap_total;
-};
-
-// LinuxParser class is designed around the system data files
-// to optimize the number of reads
+// Parser class to read Linux's /proc files; reads files into intermediate
+// structs.
 class LinuxParser {
  public:
   // Paths
@@ -87,7 +91,6 @@ class LinuxParser {
 
   // Processes
   string Command(int pid);
-
   ProcessStats ReadProcessStats(int);
   ProcessStatus ReadProcessStatus(int);
 

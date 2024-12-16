@@ -5,9 +5,9 @@
 
 using std::string;
 
-// DONE: Complete this helper function
-// INPUT: Long int measuring seconds
-// OUTPUT: HH:MM:SS
+// Format time in seconds to HH:MM:SS string
+// ARGS: Long int measuring seconds
+// RETURNS: string in HH:MM:SS format
 string Format::ElapsedTime(long int seconds) {
   long hours = seconds / 3600;
   long mins = (seconds % 3600) / 60;
