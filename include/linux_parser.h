@@ -5,25 +5,14 @@
 #include <fstream>
 #include <regex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
-#include "processor.h"
-
 using std::string;
+using std::unordered_map;
 using std::vector;
 
 struct Cpu {
-  float Utilization() {
-    return round((ActiveTime() * 1.0 / TotalTime() * 1.0) * 1000) / 1000;
-  }
-  int ActiveTime() {
-    return user + nice + system + irq + softirq + steal + guest + guest_nice;
-  }
-  int TotalTime() {
-    return user + nice + system + idle + iowait + irq + softirq + steal +
-           guest + guest_nice;
-  }
-
   string name;
   int user;
   int nice;
@@ -42,37 +31,36 @@ struct SystemStats {
   int procs_total;
   int procs_running;
   int procs_blocked;
+  long int btime;
 };
 
 struct ProcessStats {
-  int user;
-  int system;
-  int child_user;
-  int child_system;
-  int start_time;
+  long int user_time;
+  long int system_time;
+  long int child_user_time;
+  long int child_system_time;
+  long int start_time;
 };
 
 struct ProcessStatus {
-  int ram;
+  long int ram;
   int uid;
 };
 
 struct MemoryStats {
-  int64_t TotalUsedMemory() { return MemTotal - MemFree; }
-  int64_t NonCacheMemory() { return TotalUsedMemory() - Buffers - Cached; }
-  int64_t CachedMemory() { return Cached + SReclaimable - Shmem; }
-  int64_t Swap() { return SwapTotal - SwapFree; }
-  int64_t MemTotal;
-  int64_t MemFree;
-  int64_t MemAvailable;
-  int64_t Buffers;
-  int64_t Cached;
-  int64_t SReclaimable;
-  int64_t Shmem;
-  int64_t SwapFree;
-  int64_t SwapTotal;
+  int mem_total;
+  int mem_free;
+  int mem_available;
+  int buffers;
+  int cached;
+  int sreclaimable;
+  int shmem;
+  int swap_free;
+  int swap_total;
 };
 
+// LinuxParser class is designed around the system data files
+// to optimize the number of reads
 class LinuxParser {
  public:
   // Paths
@@ -87,46 +75,21 @@ class LinuxParser {
   string kOSPath{"/etc/os-release"};
   string kPasswordPath{"/etc/passwd"};
 
-  // Custom
-  MemoryStats ReadMemoryStats();
-  SystemStats ReadSystemStats();
-  ProcessStats ReadProcessStats(int);
-  ProcessStatus ReadProcessStatus(int);
-
   // System
-  float MemoryUtilization();
   long UpTime();
   std::vector<int> Pids();
-  int TotalProcesses();
-  int RunningProcesses();
   string OperatingSystem();
   string Kernel();
 
-  // CPU
-  enum CPUStates {
-    kUser_ = 0,
-    kNice_,
-    kSystem_,
-    kIdle_,
-    kIOwait_,
-    kIRQ_,
-    kSoftIRQ_,
-    kSteal_,
-    kGuest_,
-    kGuestNice_
-  };
-  std::vector<string> CpuUtilization();
-  long Jiffies();
-  long ActiveJiffies();
-  long ActiveJiffies(int pid);
-  long IdleJiffies();
+  MemoryStats ReadMemoryStats();
+  SystemStats ReadSystemStats();
+  unordered_map<int, string> ReadUserMap();
 
   // Processes
   string Command(int pid);
-  string Ram(int pid);
-  string Uid(int pid);
-  string User(int pid);
-  long int UpTime(int pid);
+
+  ProcessStats ReadProcessStats(int);
+  ProcessStatus ReadProcessStatus(int);
 
 };  // class LinuxParser
 #endif

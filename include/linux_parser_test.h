@@ -5,7 +5,6 @@
 #include <string>
 
 #include "linux_parser.h"
-#include "processor.h"
 
 using std::cout;
 using std::endl;
@@ -17,11 +16,15 @@ void TestReadMemoryStats() {
   parser.kProcDirectory = "./test/";  // local project directory
 
   MemoryStats memory = parser.ReadMemoryStats();
-  assert(memory.MemTotal == 8083696);
-  assert(memory.TotalUsedMemory() == 5537196);
-  assert(memory.NonCacheMemory() == 2794944);
-  assert(memory.CachedMemory() == 2532924);
-  assert(memory.Swap() == 0);
+  assert(memory.mem_total == 8083696);
+  assert(memory.mem_free == 2546500);
+  assert(memory.mem_available == 4873872);
+  assert(memory.buffers == 56376);
+  assert(memory.cached == 2685876);
+  assert(memory.sreclaimable == 82572);
+  assert(memory.shmem == 235524);
+  assert(memory.swap_free == 0);
+  assert(memory.swap_total == 0);
 }
 
 void TestKernel() {
@@ -38,8 +41,8 @@ void TestOperatingSystem() {
 
 void TestUpTime() {
   LinuxParser parser;
-  parser.kProcDirectory = "./test/";   // local project directory
-  assert(parser.UpTime() == 9833790);  // up time in millis
+  parser.kProcDirectory = "./test/";  // local project directory
+  assert(parser.UpTime() == 9833);    // up time in millis
 }
 
 void TestReadSystemStats() {
@@ -58,9 +61,6 @@ void TestReadSystemStats() {
   assert(system.cpus[0].steal == expected.steal);
   assert(system.cpus[0].guest == expected.guest);
   assert(system.cpus[0].guest_nice == expected.guest_nice);
-  assert(system.cpus[0].ActiveTime() == 25044);
-  assert(system.cpus[0].TotalTime() == 552148);
-  assert(system.cpus[0].Utilization() == 0.045f);
   assert(system.procs_total == 9127);
   assert(system.procs_running == 3);
   assert(system.procs_blocked == 0);
@@ -71,7 +71,7 @@ void TestReadProcessStatus() {
   parser.kProcDirectory = "./test/";  // local project directory
 
   ProcessStatus stats{parser.ReadProcessStatus(1)};
-  assert(stats.ram == 23312);
+  assert(stats.ram == 23887872);
   assert(stats.uid == 0);
 }
 
@@ -95,11 +95,17 @@ void TestReadProcessStats() {
   LinuxParser parser;
   parser.kProcDirectory = "./test/";
   auto stats = parser.ReadProcessStats(1);
-  assert(stats.user == 58);
-  assert(stats.system == 220);
-  assert(stats.child_user == 401);
-  assert(stats.child_system == 680);
-  assert(stats.start_time == 121);
+  assert(stats.user_time == 40);
+  assert(stats.system_time == 240);
+  assert(stats.child_user_time == 2114);
+  assert(stats.child_system_time == 4725);
+  assert(stats.start_time == 122);
+}
+
+void TestReadUsers() {
+  LinuxParser parser;
+  auto users = parser.ReadUserMap();
+  assert(users[0] == "root");
 }
 
 void TestLinuxParser() {
@@ -110,5 +116,4 @@ void TestLinuxParser() {
   TestReadProcessStats();
   TestReadProcessStatus();
   TestCommand();
-  cout << "LinuxParser: All tests passed!" << endl;
 }
