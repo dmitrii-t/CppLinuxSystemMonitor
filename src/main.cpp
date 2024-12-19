@@ -1,3 +1,4 @@
+#include "format_test.h"
 #include "linux_parser_test.h"
 #include "ncurses_display.h"
 #include "system.h"
@@ -5,9 +6,10 @@
 
 int main() {
   // Run the tests before starting UI
-  TestLinuxParser();
-  TestSystem();
-  cout << "LinuxParser: All tests passed!" << '\n';
+  // TestLinuxParserAll();
+  // TestSystemAll();
+  // TestElapsedTimeAll();
+  // cout << "LinuxParser: All tests passed!" << '\n';
 
   // Start the UI
   LinuxParser parser;

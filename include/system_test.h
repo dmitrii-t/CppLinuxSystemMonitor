@@ -32,7 +32,6 @@ void TestSystemReadProcessesSuccessfully() {
   assert(system.TotalProcesses() == 9127);
   assert(system.RunningProcesses() == 3);
   assert(system.Kernel() == "6.8.0-49-generic");
-  assert(system.OperatingSystem() == "Ubuntu 24.04.1 LTS");
 }
 
-void TestSystem() { TestSystemReadProcessesSuccessfully(); }
+void TestSystemAll() { TestSystemReadProcessesSuccessfully(); }

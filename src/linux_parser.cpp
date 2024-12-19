@@ -100,28 +100,6 @@ long LinuxParser::UpTime() {
   return uptime;  // seconds
 }
 
-// TODO: Read and return the number of jiffies for the system
-// long LinuxParser::Jiffies() { return 0; }
-
-// TODO: Read and return the number of active jiffies for a PID
-// REMOVE: [[maybe_unused]] once you define the function
-// long LinuxParser::ActiveJiffies(int pid [[maybe_unused]]) { return 0; }
-
-// TODO: Read and return the number of active jiffies for the system
-// long LinuxParser::ActiveJiffies() { return 0; }
-
-// TODO: Read and return the number of idle jiffies for the system
-// long LinuxParser::IdleJiffies() { return 0; }
-
-// TODO: Read and return CPU utilization
-// vector<string> LinuxParser::CpuUtilization() { return {}; }
-
-// TODO: Read and return the total number of processes
-// int LinuxParser::TotalProcesses() { return 0; }
-
-// TODO: Read and return the number of running processes
-// int LinuxParser::RunningProcesses() { return 0; }
-
 // Read the command associated with a process
 string LinuxParser::Command(int pid) {
   string cmd, line;
@@ -134,22 +112,6 @@ string LinuxParser::Command(int pid) {
   }
   return cmd;
 }
-
-// TODO: Read and return the memory used by a process
-// REMOVE: [[maybe_unused]] once you define the function
-// string LinuxParser::Ram(int pid [[maybe_unused]]) { return string(); }
-
-// TODO: Read and return the user ID associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-// string LinuxParser::Uid(int pid [[maybe_unused]]) { return string(); }
-
-// TODO: Read and return the user associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-// string LinuxParser::User(int pid [[maybe_unused]]) { return string(); }
-
-// TODO: Read and return the uptime of a process
-// REMOVE: [[maybe_unused]] once you define the function
-// long LinuxParser::UpTime(int pid [[maybe_unused]]) { return 0; }
 
 // Read system meminfo
 MemoryStats LinuxParser::ReadMemoryStats() {
@@ -200,14 +162,16 @@ SystemStats LinuxParser::ReadSystemStats() {
       if (linestream >> name) {
         // read CPUs
         if (name.length() >= 3 && name.substr(0, 3) == "cpu") {
-          // sets just the first menber of the struct which is name
-          Cpu cpu{name};
+          Cpu cpu;
+          cpu.name = name;
 
-          // continue reading the stream to the struct
+          // we could summup jeffies for the cpu here but that would mean
+          // including business logic into the parser implementation
+          // so simply reading the jeffies into the struct
           if (linestream >> cpu.user >> cpu.nice >> cpu.system >> cpu.idle >>
               cpu.iowait >> cpu.irq >> cpu.softirq >> cpu.steal >> cpu.guest >>
               cpu.guest_nice) {
-            // append when all the reads has happened
+            // append the cpu once all the reads has happened
             system.cpus.push_back(cpu);
           }
         }
@@ -239,7 +203,7 @@ ProcessStatus LinuxParser::ReadProcessStatus(int pid) {
     while (std::getline(filestream, line)) {
       std::istringstream linestream(line);
       if (linestream >> key) {
-        // read RAM
+        // read poiecess' allocated RAM
         if (key == "VmSize:") {
           string units;
           linestream >> status.ram >> units;
@@ -257,6 +221,11 @@ ProcessStatus LinuxParser::ReadProcessStatus(int pid) {
           }
 
           status.ram *= unit_mult;
+        }
+
+        // read the state of the process
+        if (key == "State:") {
+          linestream >> status.state;
         }
 
         // read UID

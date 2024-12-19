@@ -1,19 +1,21 @@
 #include "format.h"
 
-#include <cstdio>
+#include <iomanip>
+#include <sstream>
 #include <string>
 
+using std::setfill;
 using std::string;
+using std::stringstream;
 
-// Format time in seconds to HH:MM:SS string
-// ARGS: Long int measuring seconds
-// RETURNS: string in HH:MM:SS format
-string Format::ElapsedTime(long int seconds) {
-  long hours = seconds / 3600;
-  long mins = (seconds % 3600) / 60;
-  long secs = seconds % 60;
+string Format::ElapsedTime(long elapsed_seconds) {
+  long hours = elapsed_seconds / 3600;
+  long minutes = (elapsed_seconds % 3600) / 60;
+  long seconds = elapsed_seconds % 60;
 
-  char buffer[9];  // HH:MM:SS + null terminator
-  snprintf(buffer, sizeof(buffer), "%02ld:%02ld:%02ld", hours, mins, secs);
-  return string(buffer);
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(2) << hours << ":" << std::setw(2)
+     << minutes << ":" << std::setw(2) << seconds;
+
+  return ss.str();
 }
