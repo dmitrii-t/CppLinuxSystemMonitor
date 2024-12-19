@@ -69,9 +69,10 @@ void TestReadProcessStatus() {
   LinuxParser parser;
   parser.kProcDirectory = "./test/";  // local project directory
 
-  ProcessStatus stats{parser.ReadProcessStatus(1)};
-  assert(stats.ram == 23887872);
-  assert(stats.uid == 0);
+  ProcessStatus pstatus{parser.ReadProcessStatus(1)};
+  // cout << "pstatus.ram=" << pstatus.ram << '\n';
+  assert(pstatus.ram == 23887872);
+  assert(pstatus.uid == 0);
 }
 
 void TestPids() {
@@ -107,7 +108,7 @@ void TestReadUsers() {
   assert(users[0] == "root");
 }
 
-void TestLinuxParser() {
+void TestLinuxParserAll() {
   TestReadMemoryStats();
   TestKernel();
   TestUpTime();

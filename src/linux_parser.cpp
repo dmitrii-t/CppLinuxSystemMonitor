@@ -201,7 +201,8 @@ SystemStats LinuxParser::ReadSystemStats() {
         // read CPUs
         if (name.length() >= 3 && name.substr(0, 3) == "cpu") {
           // sets just the first menber of the struct which is name
-          Cpu cpu{name};
+          Cpu cpu;
+          cpu.name = name;
 
           // continue reading the stream to the struct
           if (linestream >> cpu.user >> cpu.nice >> cpu.system >> cpu.idle >>
@@ -239,7 +240,7 @@ ProcessStatus LinuxParser::ReadProcessStatus(int pid) {
     while (std::getline(filestream, line)) {
       std::istringstream linestream(line);
       if (linestream >> key) {
-        // read RAM
+        // read poiecess' allocated RAM
         if (key == "VmSize:") {
           string units;
           linestream >> status.ram >> units;
@@ -257,6 +258,11 @@ ProcessStatus LinuxParser::ReadProcessStatus(int pid) {
           }
 
           status.ram *= unit_mult;
+        }
+
+        // read the state of the process
+        if (key == "State:") {
+          linestream >> status.state;
         }
 
         // read UID

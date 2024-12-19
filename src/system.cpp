@@ -1,14 +1,15 @@
 #include "system.h"
-#include "format.h"
-#include "linux_parser.h"
-#include "process.h"
-#include "processor.h"
 
 #include <cstddef>
 #include <iostream>
 #include <set>
 #include <string>
 #include <vector>
+
+#include "format.h"
+#include "linux_parser.h"
+#include "process.h"
+#include "processor.h"
 
 using std::cout;
 using std::set;
@@ -51,8 +52,15 @@ void System::Read() {
 
   for (auto pid : pids) {
     // Read process data
-    auto stats = parser_.ReadProcessStats(pid);
     auto status = parser_.ReadProcessStatus(pid);
+
+    // continue to the next one if the process does not have mem allocation data
+    if (status.ram < 0) {
+      continue;
+    }
+
+    auto stats = parser_.ReadProcessStats(pid);
+
     auto command = parser_.Command(pid);
     auto username = user_map[status.uid];
     auto proc_start_time = start_time_sec_ + stats.start_time / CLK_TICKS;
@@ -71,6 +79,8 @@ void System::Read() {
 
     processes_.push_back(process);
   }
+
+  std::sort(processes_.begin(), processes_.end(), std::greater<Process>());
 }
 
 // DOONE: Return the system's CPU
