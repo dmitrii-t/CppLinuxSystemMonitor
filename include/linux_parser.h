@@ -59,6 +59,7 @@ struct ProcessStats {
 
 // Struct to read /proc/<pid>/status
 struct ProcessStatus {
+  string state;
   long int ram{-1};
   int uid{-1};
 };
