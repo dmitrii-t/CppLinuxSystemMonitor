@@ -44,5 +44,6 @@ long int Process::UpTime() const {
   return currecnt_time_sec - start_time_sec_;
 }
 
-// Overload the "less than" comparison operator for Process objects
-bool Process::operator<(Process const& a) const { return ram_ < a.ram_; }
+// Overload the "greater than" comparison operator for Process objects
+// to see the processes in descending order by RAM utilization
+bool Process::operator>(Process const& a) const { return ram_ > a.ram_; }

@@ -36,7 +36,7 @@ class Process {
   float CpuUtilization() const;            // See src/process.cpp
   string Ram();                            // See src/process.cpp
   long int UpTime() const;                 // See src/process.cpp
-  bool operator<(Process const& a) const;  // See src/process.cpp
+  bool operator>(Process const& a) const;  // See src/process.cpp
 
  private:
   // Declare any necessary private members
